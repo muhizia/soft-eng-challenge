@@ -12,3 +12,8 @@ class ShipSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Ship
         fields = ['id', 'code', 'name']
+        
+class CrewMemberSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = CrewMember
+        fields = ['id', 'code', 'firstName', 'lastName', ]

@@ -25,9 +25,9 @@ class Ship(models.Model):
         
 class CrewMember(models.Model):
     ship       = models.ForeignKey(Ship, on_delete=models.CASCADE, null=False)
-    firstName  = models.CharField(max_length=200, null=False, blank=False, unique=True)
+    firstName  = models.CharField(max_length=200, null=False, blank=False)
     lastName   = models.CharField(max_length=200, null=False, blank=False)
-    code       = models.CharField(max_length=200, null=False, blank=False)
+    code       = models.CharField(max_length=200, null=False, blank=False, unique=True)
     isOfficer  = models.BooleanField(default=False)
     created_at = models.DateTimeField(db_index=True, default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
