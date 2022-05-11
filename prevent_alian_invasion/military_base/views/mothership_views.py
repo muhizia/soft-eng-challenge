@@ -3,6 +3,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from military_base.models import MotherShip, Ship, CrewMember
+from military_base.utils import util
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from rest_framework import permissions
@@ -31,11 +32,17 @@ def getMotherShipById(request, pk):
 @api_view(['POST'])
 def createMotherShip(request):
     data = request.data
-    _ms = MotherShip.objects.filter(code = data['code'])
+    # Check if ships object were provided
     if "ships" not in data:
         message = {"Error": True, "message": str(os.getenv('ENTITY_NOT_PROVIDED'))}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
     
+    # Check if the code was provided
+    if "code" not in data:
+        message = {"Error": True, "message": str(os.getenv('CODE_NOT_PROVIDED'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    
+    _ms = MotherShip.objects.filter(code = data['code'])
     # checking the duplicity of the Mother ship
     if len(_ms) > 0:
         message = {"Error": True, "message": str(os.getenv('MOTHER_CODE_EXISTS'))}
@@ -43,19 +50,14 @@ def createMotherShip(request):
     
     # Check the ship sent are valid
     if data['ships'] is None or len(data['ships']) < 3:
-        message = {"Error": True,  "message": str(os.getenv('THREE_SHIPS_FAI'))}
+        message = {"Error": True,  "message": str(os.getenv('THREE_SHIPS_FAIL'))}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
     
     # loop through ships to check if they have crew members
     for ship in data['ships']:
-        if ship is None or len(ship) < 3:
+        if ship is None or len(data['ships']) < 3:
             message = {"Error": True, "message": str(os.getenv('THREE_SHIPS_FAIL'))}
             return Response(message, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check if the ship has enough space
-        if len(ship) >= 9:
-            message = {"Error": True, "message": str(os.getenv('MOTHER_SHIP_NOT_ENOUGH'))}
-            return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
         
         # checking the duplicity of the Mother ship
         # _c stands for the ship object.
@@ -65,22 +67,29 @@ def createMotherShip(request):
             message = {"Error": True, "message": str(os.getenv('SHIP_EXISTS'))}
             return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
         
-        # loop through given members
-        for member in ship["members"]:
-            if member is None or len(member) < 3:
-                message = {"Error": True, "message": str(os.getenv('THREE_MEMBER_FAIL'))}
-                return Response(message, status=status.HTTP_400_BAD_REQUEST)
-            
-            if len(member) >= 5:
-                message = {"Error": True, "message": str(os.getenv('SHIP_NOT_ENOUGH'))}
-                return Response(message, status=status.HTTP_400_BAD_REQUEST)
-            _cm = Ship.objects.filter(code = ship['code'])
-            if len(_cm) > 0:
-                message = {"Error": True, "message": str(os.getenv('MEMBER_EXISTS'))}
-                return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        # Check if the ship has enough space
+        if len(data['ships']) + len(_s) > 9:
+            message = {"Error": True, "message": str(os.getenv('MOTHER_SHIP_NOT_ENOUGH'))}
+            return Response(message, status=status.HTTP_507_INSUFFICIENT_STORAGE)
+        
+         # Check if the member does not exists
+        _cm = Ship.objects.filter(code = ship['code'])
+        if len(_cm) > 0:
+            message = {"Error": True, "message": str(os.getenv('MEMBER_EXISTS'))}
+            return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        
+        # checking the ship space
+        if len(ship["members"]) + len(_cm) > 5:
+            message = {"Error": True, "message": str(os.getenv('SHIP_NOT_ENOUGH'))}
+            return Response(message, status=status.HTTP_507_INSUFFICIENT_STORAGE)
+        
+        # Check if any crew member given does not exist 
+        util.check_member(ship)
     
+    
+    name = '' if "name" not in data else data['name']
     mother_ships = MotherShip.objects.create(
-        name = data['name'],
+        name = name,
         code = data['code'],
     )
     for ship in data['ships']:

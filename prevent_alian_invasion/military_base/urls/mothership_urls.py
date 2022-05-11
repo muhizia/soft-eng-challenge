@@ -4,8 +4,6 @@ from django.urls import include, path
 from rest_framework import routers
 from military_base.views import mothership_views as views
 
-
-
 urlpatterns = [
     path('', views.getMotherShips, name="motherships"),
     path('create/', views.createMotherShip, name="mothership_create"),
