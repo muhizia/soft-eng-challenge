@@ -92,20 +92,8 @@ def createMotherShip(request):
         name = name,
         code = data['code'],
     )
-    for ship in data['ships']:
-        _ship = Ship.objects.create(
-            mother = mother_ships,
-            name = ship['name'],
-            code = ship['code'],
-        )
-        for member in ship["members"]:
-            CrewMember.objects.create(
-                ship = _ship,
-                firstName = member['first_name'],
-                lastName = member['last_name'],
-                code = member['code'],
-                isOfficer = member['is_officer']
-            )
+    util.insert_into_ship(data, mother_ships)
+    
     # serializer = MotherShipSerializer(mother_ships, many=False)
     return Response(data, status=status.HTTP_201_CREATED)
 

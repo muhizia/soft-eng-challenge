@@ -16,3 +16,22 @@ def check_member(ship):
         if len(_m) > 0:
             message = {"Error": True, "message": str(os.getenv('MEMBER_EXISTS'))}
             return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        
+def insert_into_ship(data, mother_ships):
+    for ship in data['ships']:
+        ship_parent = Ship.objects.create(
+            mother = mother_ships,
+            name = ship['name'],
+            code = ship['code'],
+        )
+        insert_into_crew_member(ship, ship_parent)
+        
+def insert_into_crew_member(ship, ship_parent):
+    for member in ship["members"]:
+        CrewMember.objects.create(
+            ship = ship_parent,
+            firstName = member['first_name'],
+            lastName = member['last_name'],
+            code = member['code'],
+            isOfficer = member['is_officer']
+        )

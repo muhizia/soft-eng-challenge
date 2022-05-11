@@ -85,20 +85,12 @@ def createShip(request):
     
     name = '' if "name" not in ship else ship['name']
     # Creating the Ship object
-    _ship = Ship.objects.create(
+    ship_parent = Ship.objects.create(
         mother = _ms[0],
         name = name,
         code = ship['code'],
     )
-    for member in ship["members"]:
-        # Creating a crew member of the ship
-        CrewMember.objects.create(
-            ship = _ship,
-            firstName = member['first_name'],
-            lastName = member['last_name'],
-            code = member['code'],
-            isOfficer = member['is_officer']
-        )
+    util.insert_into_crew_member(ship, ship_parent)
     return Response(data, status=status.HTTP_201_CREATED)
 
 
