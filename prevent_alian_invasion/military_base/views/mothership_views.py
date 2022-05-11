@@ -16,13 +16,16 @@ def getMotherShips(request):
     mother_ships = MotherShip.objects.all()
 
     serializer = MotherShipSerializer(mother_ships, many=True)
-    return Response({'mother_ships': serializer.data})
+    return Response({'mother_ships': serializer.data}, status.HTTP_200_OK)
 
 @api_view(['GET'])
 def getMotherShipById(request, pk):
-    mother_ships = MotherShip.objects.get(id=pk)
+    mother_ships =  MotherShip.objects.filter(id=pk).first()
+    if mother_ships is None:
+        message = {"Error": True, "message": str(os.getenv('MOTHER_SHIP_NOT_FOUND'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
     serializer = MotherShipSerializer(mother_ships, many=False)
-    return Response(serializer.data)
+    return Response(serializer.data, status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -95,7 +98,7 @@ def createMotherShip(request):
                 isOfficer = member['is_officer']
             )
     # serializer = MotherShipSerializer(mother_ships, many=False)
-    return Response(data)
+    return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['PUT'])
