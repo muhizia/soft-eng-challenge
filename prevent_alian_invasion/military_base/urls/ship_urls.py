@@ -12,5 +12,4 @@ urlpatterns = [
     path('<str:pk>/', views.getShipById, name="ship_id"),
     path('update/<str:pk>/', views.updateShip, name="ship_update"),
     path('delete/<str:pk>/', views.deleteShip, name="ship_delete"),
-
 ]

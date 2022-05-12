@@ -1,4 +1,5 @@
 import os
+from re import S
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
@@ -84,7 +85,7 @@ def createMotherShip(request):
             return Response(message, status=status.HTTP_507_INSUFFICIENT_STORAGE)
         
         # Check if any crew member given does not exist 
-        util.check_member(ship)
+        util.check_members(ship)
     
     
     name = '' if "name" not in data else data['name']
@@ -101,18 +102,35 @@ def createMotherShip(request):
 @api_view(['PUT'])
 def updateMotherShip(request, pk):
     data = request.data
-    mother_ships = MotherShip.objects.get(id=pk)
-
+    mother_ships = MotherShip.objects.filter(id=pk)
+    
+    # check if the selected mother ship exists
+    if len(mother_ships) < 1:
+        message = {"Error": True, "message": str(os.getenv('MOTHER_SHIP_NOT_EXISTS'))}
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
+    
+    # check if the object sent if full.
+    if "name" not in data or data['name'] is None:
+        message = {"Error": True, "message": str(os.getenv('SHIP_DETAIL_FAILS'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Update the object's members
+    mother_ships = mother_ships.first()
     mother_ships.name = data ['name']
-    mother_ships.code = data ['code']
     mother_ships.save()
-
     serializer = MotherShipSerializer(mother_ships, many=False)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['DELETE'])
 def deleteMotherShip(request, pk):
+    mother_ships = MotherShip.objects.filter(id=pk)
+    # check if the selected mother ship exists
+    if len(mother_ships) < 1:
+        message = {"Error": True, "message": str(os.getenv('MOTHER_SHIP_NOT_EXISTS'))}
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
+    
+    # delete the mothership
     mother_ships = MotherShip.objects.get(id=pk)
     mother_ships.delete()
-    return Response('MOTHERSHIP deleted')
+    return Response('MOTHERSHIP deleted', status=status.HTTP_200_OK)

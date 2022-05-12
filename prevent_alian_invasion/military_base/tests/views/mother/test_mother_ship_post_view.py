@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from django.test import TestCase, Client
 from django.urls import reverse, resolve
 from military_base.models import MotherShip, Ship, CrewMember
@@ -8,32 +9,15 @@ from rest_framework.test import APIClient, APITestCase
 class TestViews(TestCase):
     
     def setUp(self):
+        self.BASE_DIR = Path(__file__).resolve().parent.parent
         self.url = '/api/mothership/'
         MotherShip.objects.create(id=14, code="x-r")
-        
-        
-    
+       
     def getJsonFile(self, value):
-        path = '/Users/muhizi/Documents/fulgel/soft-eng-challenge/mother_json/mother' + value + '.json'
-        mother_fail_4 = open(path)
-        mother_fail_4 = json.load(mother_fail_4)
-        return mother_fail_4
-        
-        
-    def test_get_mother_ships(self):
-        client = APIClient()
-        response = client.get(self.url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-    def test_get_mother_ships_by_id(self):
-        client = APIClient()
-        response = client.get(self.url + '14/', format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-    def test_get_mother_ships_by_wrong_id(self):
-        client = APIClient()
-        response = client.get(self.url + '1/', format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        path = '{}/mother/mother_json/mother'.format(self.BASE_DIR) + value + '.json'
+        _json = open(path)
+        _json = json.load(_json)
+        return _json
     
     def test_create_mother_ship_success_1(self):
         client = APIClient()

@@ -5,8 +5,6 @@ from rest_framework.response import Response
 from military_base.models import MotherShip, Ship, CrewMember
 from military_base.utils import util
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
-from rest_framework import permissions
 from military_base.serializers import ShipSerializer
 from dotenv import load_dotenv
 load_dotenv()
@@ -81,7 +79,7 @@ def createShip(request):
         return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
     
     # Check if any crew member given does not exist
-    util.check_member(ship)
+    util.check_members(ship)
     
     name = '' if "name" not in ship else ship['name']
     # Creating the Ship object
@@ -90,24 +88,42 @@ def createShip(request):
         name = name,
         code = ship['code'],
     )
-    util.insert_into_crew_member(ship, ship_parent)
+    util.loop_through_member(ship, ship_parent)
     return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['PUT'])
 def updateShip(request, pk):
     data = request.data
-    _ships = Ship.objects.get(_id=pk)
-
-    _ships.name = data ['name']
-    _ships.code = data ['code']
+    _ships = Ship.objects.filter(id=pk)
+    
+    # check if the selected mother ship exists
+    if len(_ships) < 1:
+        message = {"Error": True, "message": str(os.getenv('SHIP_NOT_EXISTS'))}
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
+    
+    # check if the object sent if full.
+    if "name" not in data or data['name'] is None:
+        message = {"Error": True, "message": str(os.getenv('SHIP_DETAIL_FAILS'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    
+    # update ship
+    _ships = _ships.first()
+    _ships.name = data['name']
     _ships.save()
 
     serializer = ShipSerializer(_ships, many=False)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['DELETE'])
 def deleteShip(request, pk):
+    ships = Ship.objects.filter(id=pk)
+    # check if the selected mother ship exists
+    if len(ships) < 1:
+        message = {"Error": True, "message": str(os.getenv('SHIP_NOT_FOUND'))}
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
+    
+    # delete the mothership
     ships = Ship.objects.get(id=pk)
     ships.delete()
-    return Response('SHIP deleted')
+    return Response('SHIP deleted', status=status.HTTP_200_OK)

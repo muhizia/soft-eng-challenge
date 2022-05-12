@@ -4,8 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from military_base.models import CrewMember, Ship
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
-from rest_framework import permissions
+from military_base.utils import util
 from military_base.serializers import CrewMemberSerializer
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,7 +18,10 @@ def getCrewMembers(request):
 
 @api_view(['GET'])
 def getCrewMemberById(request, pk):
-    _crews = CrewMember.objects.get(id=pk)
+    _crews = CrewMember.objects.filter(id=pk).first()
+    if _crews is None:
+        message = {"Error": True, "message": str(os.getenv('CREW_NOT_FOUND'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
     serializer = CrewMemberSerializer(_crews, many=False)
     return Response(serializer.data)
 
@@ -27,9 +29,13 @@ def getCrewMemberById(request, pk):
 @api_view(['POST'])
 def createCrewMember(request):
     data = request.data
-    _s = Ship.objects.filter(code = data["code"])
+    # check if the code for the ship is given
+    if "code" not in data or data['code'] is None:
+        message = {"Error": True, "message": str(os.getenv('SHIP_NOT_EXISTS'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
     
     # checking if the mother ship exists
+    _s = Ship.objects.filter(code = data["code"])
     if len(_s) < 1:
         message = {"Error": True,  "message": str(os.getenv('SHIP_NOT_EXISTS'))}
         return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -41,38 +47,34 @@ def createCrewMember(request):
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
     
     # Checking if the mother ship is not full
-    _c = CrewMember.objects.filter(ship = _s[0])
-    if len(_c) + len(crew_member) > 5:
+    _c = CrewMember.objects.filter(ship = _s.first())
+    if len(_c) >= 5:
         message = {"Error": True,  "message": str(os.getenv('SHIP_NOT_ENOUGH'))}
         return Response(message, status=status.HTTP_406_NOT_ACCEPTABLE)
     
-    # Check if any crew member given does not exist
-    for member in crew_member:
-        if member is None:
-            message = {"Error": True, "message": str(os.getenv('THREE_MEMBER_FAIL'))}
-            return Response(message, status=status.HTTP_400_BAD_REQUEST)
-    
-    for member in crew_member:
-        # Creating a crew member of the ship
-        CrewMember.objects.create(
-            ship = _s[0],
-            firstName = member['first_name'],
-            lastName = member['last_name'],
-            code = member['code'],
-            isOfficer = member['is_officer']
-        )
-    return Response(data)
+    # Checking if all required are given
+    if "first_name" not in crew_member or "last_name" not in crew_member or crew_member["first_name"] is None or crew_member["last_name"] is None:
+        message = {"Error": True, "message": str(os.getenv('MEMBER_DETAIL_FAILS'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    util.insert_into_crew_member(crew_member, _s.first())
+    return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['PUT'])
 def updateCrewMember(request, pk):
     data = request.data
-    _crews = CrewMember.objects.get(id=pk)
-
+    _crews = CrewMember.objects.filter(id=pk)
+    if len(_crews) < 1:
+        message = {"Error": True, "message": str(os.getenv('CREW_NOT_FOUND'))}
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
+    
+    if "first_name" not in data or "last_name" not in data or data["first_name"] is None or data["last_name"] is None:
+        message = {"Error": True, "message": str(os.getenv('MEMBER_DETAIL_FAILS'))}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    
+    _crews = _crews.first()
     _crews.firstName = data ['first_name']
     _crews.lastName = data ['last_name']
-    _crews.code = data ['code']
-    _crews.isOfficer = data ['is_officer']
     _crews.save()
 
     serializer = CrewMemberSerializer(_crews, many=False)
@@ -101,14 +103,14 @@ def moveCrewMember(request, pk):
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
     
     crews = CrewMember.objects.filter(ship = to_ship)
-    if len(crews) >= 4:
+    if len(crews) >= 5:
         message = {"Error": True, "message": str(os.getenv('SHIP_NOT_ENOUGH'))}
-        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        return Response(message, status=status.HTTP_507_INSUFFICIENT_STORAGE)
     
     _crew = CrewMember.objects.filter(ship=from_ship, id=pk).first()
     if _crew is None:
         message = {"Error": True, "message": str(os.getenv('NAME_NOT_EXISTS'))}
-        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
    
     _crew.ship = to_ship
     _crew.save()
@@ -117,6 +119,12 @@ def moveCrewMember(request, pk):
 
 @api_view(['DELETE'])
 def deleteCrewMember(request, pk):
-    ships = CrewMember.objects.get(id=pk)
-    ships.delete()
+    # check if the selected mother ship exists
+    crew = CrewMember.objects.filter(id=pk)
+    if len(crew) < 1:
+        message = {"Error": True, "message": str(os.getenv('CREW_NOT_FOUND'))}
+        return Response(message, status=status.HTTP_404_NOT_FOUND)
+    # delete crew member
+    crew = CrewMember.objects.get(id=pk)
+    crew.delete()
     return Response('CREW MEMBER deleted')

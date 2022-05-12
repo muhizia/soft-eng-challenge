@@ -1,0 +1,17 @@
+{"name": "East MotherShip", "code": "68-X", "ships": [
+    {"name": "Invenstigator Ship", "code": "01-DC", "members":[
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "01-DC-01", "is_officer" : true},
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "01-DC-02", "is_officer" : false },
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "01-DC-03", "is_officer" : false }
+        ]}, 
+    {"name": "Data collector Ship", "code": "02-DC", "members":[
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "02-DC-01", "is_officer" : false },
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "02-DC-02", "is_officer" : false},
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "02-DC-03", "is_officer" : true }
+        ]},
+    {"name": "Analyst Ship", "code": "03-DC", "members":[
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "03-DC-01", "is_officer" : false },
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "03-DC-02", "is_officer" : false },
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "03-DC-03", "is_officer" : true }
+        ]}
+] }

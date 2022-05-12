@@ -1,0 +1,8 @@
+{ "code": "x-r", "ship":
+    {"name": "Invenstigator Ship", "members": [
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "04-INV-01", "is_officer" : true},
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "04-INV-01", "is_officer" : true},
+        {"first_name": "Aristide", "last_name": "Muhizi", "code": "04-INV-01", "is_officer" : true}
+        ]
+    }
+}
